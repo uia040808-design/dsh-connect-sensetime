@@ -47,44 +47,72 @@ DSH Host：@local/dsh-raccoon ◀──┘  读取 token，仅在本进程内使
 | DSH 桌面版 | 在 0.2.2-rc.1 上开发；插件依赖 Harness 的 `webServer` 与 client UI 槽位 |
 | pnpm | 仅用于安装 profile 依赖；DSH 自带的 pnpm 也能完成 |
 
-> 仓库名 `dsh-connect-sensetime` 是 GitHub 上的仓库名，插件包名仍是 `@local/dsh-raccoon`——它通过本地 `link:` 安装，不发布到 npm。
+> 仓库名 `dsh-connect-sensetime` 是 GitHub 上的仓库名，插件包名仍是 `@local/dsh-raccoon`，不发布到 npm。安装有两种方式：**一键从 GitHub 安装**（推荐给普通用户），或 `link:` 本地源码（要改代码时用）。
 
-### 1. 放到 DSH 的插件目录
+### 一键安装（推荐）
 
-```powershell
-$dst = Join-Path $env:USERPROFILE '.dsh\plugin-sources\dsh-raccoon'
-git clone https://github.com/uia040808-design/dsh-connect-sensetime.git $dst
-```
-
-### 2. 让 profile 引用它
-
-编辑 DSH profile 的 `package.json`（桌面版默认在 `%USERPROFILE%\.dsh\profiles\desktop\package.json`），加入依赖，并在 `dsh.profile.bundles` 里登记：
-
-```json
-{
-  "dependencies": {
-    "@local/dsh-raccoon": "link:C:/Users/<你的用户名>/.dsh/plugin-sources/dsh-raccoon"
-  },
-  "dsh": {
-    "profile": {
-      "bundles": ["@deepseek-ai/dsh-base", "...", "@local/dsh-raccoon"]
-    }
-  }
-}
-```
-
-`link:` 路径用正斜杠（JSON 字符串里的反斜杠需要转义）。保留文件里原有的依赖与 bundles 条目，只把 `@local/dsh-raccoon` 加进去。
-
-### 3. 安装依赖并重启 DSH
+前提：终端里能直接运行 `dsh`（`dsh -V` 输出版本号；桌面版一般随附 CLI，没有可 `npm i -g @deepseek-ai/dsh`）。
 
 ```powershell
-cd "$env:USERPROFILE\.dsh\profiles\desktop"
-pnpm install
+dsh plugin --profile desktop add github:uia040808-design/dsh-connect-sensetime
 ```
 
-重启 DSH 后，左栏应出现「小浣熊接入」。没有出现时，先看宿主日志里有没有 `[raccoon]` 开头的行。
+`dsh plugin` 会一次做完三件事：
 
-### 4. 把模型加进 DSH
+1. 把插件装进 profile 的 `node_modules`（包名 `@local/dsh-raccoon`）；
+2. 在 profile 的 `package.json` 里登记 `"@local/dsh-raccoon": "github:uia040808-design/dsh-connect-sensetime"`；
+3. 自动把 `@local/dsh-raccoon` 追加进该 profile 的 `dsh.profile.bundles` —— 不用手改 JSON。
+
+装完重启 DSH 即可。profile 名不是 `desktop`（例如 `web`）时，把 `--profile desktop` 换成你自己的。
+
+更新与卸载：
+
+```powershell
+# 更新到 main 的最新提交（若没变化，先 remove 再 add 一次）
+pnpm --dir "$env:USERPROFILE\.dsh\profiles\desktop" update @local/dsh-raccoon
+
+# 卸载（同时从 dsh.profile.bundles 里摘掉）
+dsh plugin --profile desktop remove @local/dsh-raccoon
+```
+
+> 从 GitHub 安装需要能访问 `codeload.github.com`，慢网络下可能要 1–2 分钟；`dsh plugin` 使用 PATH 上的 `pnpm`。仓库里没有需要编译的代码，所以不会触发 pnpm 的构建审批提示。
+
+### 手动安装（本地开发，需要改源码时）
+
+1. 克隆到 DSH 的插件目录：
+
+   ```powershell
+   $dst = Join-Path $env:USERPROFILE '.dsh\plugin-sources\dsh-raccoon'
+   git clone https://github.com/uia040808-design/dsh-connect-sensetime.git $dst
+   ```
+
+2. 让 profile 的 `package.json`（桌面版默认 `%USERPROFILE%\.dsh\profiles\desktop\package.json`）用 `link:` 指向这份源码，并在 `dsh.profile.bundles` 里登记：
+
+   ```json
+   {
+     "dependencies": {
+       "@local/dsh-raccoon": "link:C:/Users/<你的用户名>/.dsh/plugin-sources/dsh-raccoon"
+     },
+     "dsh": {
+       "profile": {
+         "bundles": ["@deepseek-ai/dsh-base", "...", "@local/dsh-raccoon"]
+       }
+     }
+   }
+   ```
+
+   `link:` 路径用正斜杠（JSON 字符串里的反斜杠需要转义）。保留文件里原有的依赖与 bundles 条目，只把 `@local/dsh-raccoon` 加进去。
+
+3. 安装依赖并重启 DSH：
+
+   ```powershell
+   cd "$env:USERPROFILE\.dsh\profiles\desktop"
+   pnpm install
+   ```
+
+   重启后，左栏应出现「小浣熊接入」。没有出现时，先看宿主日志里有没有 `[raccoon]` 开头的行。
+
+### 把模型接进 DSH
 
 1. 打开面板 → **接入配置**，复制 Base URL（默认 `http://127.0.0.1:8787/v1`）和 API Key（`rcc_` 开头）。
 2. DSH → 设置 → 模型 → 添加模型提供商 → **自定义模型 API**。
