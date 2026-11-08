@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Raccoon connection",
+    "description": "Shows the Raccoon desktop credits and model catalog in the left sidebar, and serves an OpenAI-compatible endpoint for DSH."
+  }
+}

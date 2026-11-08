@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Local secrets / runtime state (never commit)
+secret.json
+*.secret.json
+.raccoon-connect/
+
+# Extracted artifacts from app.asar experiments
+*.asar
+out*.json
+
+# Logs and OS junk
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Internal reverse-engineering notes (kept local, not published)
+docs/
